@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { BellRing, FileCheck2, LogIn, Ship, Target, Users } from 'lucide-react';
-import { actions, usePermissions } from '@/data/store';
+import { actions, usePermissions, useSessionReady } from '@/data/store';
 import { Field } from '@/components/ui';
 
 export default function Login() {
@@ -13,6 +13,8 @@ export default function Login() {
   const navigate = useNavigate();
   const from = (useLocation().state as { from?: string } | null)?.from ?? '/';
 
+  const ready = useSessionReady();
+  if (!ready) return null;
   if (user) return <Navigate to={from} replace />;
 
   const submit = async (e: React.FormEvent) => {

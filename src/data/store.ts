@@ -12,7 +12,7 @@ import type {
 } from './types';
 import { addMonths, buildSchedule, today, uid } from '@/lib/utils';
 import { buildDigest } from '@/lib/digest';
-import { ADMIN_PASSWORD_HASH, hashPassword } from '@/lib/auth';
+import { ADMIN_PASSWORD_HASH, hashPassword, sessionToken } from '@/lib/auth';
 
 const KEY = 'gumruk-crm-db';
 const SESSION_KEY = 'gumruk-crm-session';
@@ -69,10 +69,27 @@ export function useDb<T>(selector: (db: Database) => T): T {
 export const getDb = () => state;
 
 // ---------------- Oturum ----------------
-let sessionUserId: string | null = (() => {
-  try { return localStorage.getItem(SESSION_KEY); } catch { return null; }
-})();
+const expectedHash = (u: User) => u.passwordHash ?? (u.id === 'u_admin' ? ADMIN_PASSWORD_HASH : '');
+
+// Oturum "kullanıcıId.belirteç" olarak saklanır; açılışta belirteç doğrulanmadan oturum kabul edilmez.
+let sessionUserId: string | null = null;
+let sessionReady = false;
 const sessionListeners = new Set<() => void>();
+const notifySession = () => sessionListeners.forEach((l) => l());
+(async () => {
+  try {
+    const [id, token] = (localStorage.getItem(SESSION_KEY) ?? '').split('.');
+    const u = state.users.find((x) => x.id === id);
+    const exp = u ? expectedHash(u) : '';
+    if (u && exp && token && token === (await sessionToken(u.id, exp))) sessionUserId = u.id;
+    else localStorage.removeItem(SESSION_KEY);
+  } catch { /* yoksay */ }
+  sessionReady = true;
+  notifySession();
+})();
+export function useSessionReady() {
+  return useSyncExternalStore((cb) => { sessionListeners.add(cb); return () => { sessionListeners.delete(cb); }; }, () => sessionReady);
+}
 export function useSessionUser(): User | null {
   const id = useSyncExternalStore(
     (cb) => { sessionListeners.add(cb); listeners.add(cb); return () => { sessionListeners.delete(cb); listeners.delete(cb); }; },
@@ -118,20 +135,21 @@ export const actions = {
     const user = state.users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
     if (!user || !password) return fail;
     // Admin şifresi .env'deki özetten, diğer kullanıcılarınki admin'in panelden belirlediği özetten doğrulanır.
-    const expected = user.passwordHash ?? (user.id === 'u_admin' ? ADMIN_PASSWORD_HASH : '');
+    const expected = expectedHash(user);
     if (!expected) return fail;
     if ((await hashPassword(user.email, password)) !== expected) return fail;
     if (!user.active) return { ok: false, error: 'Hesabınız pasif durumda. Yöneticinize başvurun.' };
     sessionUserId = user.id;
-    try { localStorage.setItem(SESSION_KEY, user.id); } catch { /* */ }
+    const token = await sessionToken(user.id, expected);
+    try { localStorage.setItem(SESSION_KEY, `${user.id}.${token}`); } catch { /* */ }
     set(pipe((db) => ({ ...db, users: db.users.map((u) => (u.id === user.id ? { ...u, lastLoginAt: now() } : u)) }), audit('login', 'Oturum', user.name)));
-    sessionListeners.forEach((l) => l());
+    notifySession();
     return { ok: true };
   },
   logout() {
     sessionUserId = null;
     try { localStorage.removeItem(SESSION_KEY); } catch { /* */ }
-    sessionListeners.forEach((l) => l());
+    notifySession();
     listeners.forEach((l) => l());
   },
   resetDemo() {

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import { Forbidden } from './components/ui';
-import { usePermissions } from './data/store';
+import { usePermissions, useSessionReady } from './data/store';
 import type { Permission } from './data/types';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -26,7 +26,9 @@ function Guard({ perm, children }: { perm: Permission; children: ReactNode }) {
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = usePermissions();
+  const ready = useSessionReady();
   const loc = useLocation();
+  if (!ready) return null;
   if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   return <>{children}</>;
 }
