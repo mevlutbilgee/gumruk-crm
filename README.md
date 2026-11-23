@@ -1,5 +1,7 @@
 # GümrükCRM
 
+**🔗 Canlı panel: https://mevlutbilgee.github.io/gumruk-crm/**
+
 Gümrük müşavirliği / dış ticaret hizmeti veren firmalar için B2B CRM yönetim paneli.
 React + TypeScript + Vite ile yazıldı; veritabanı olarak **Supabase**, barındırma ve
 zamanlanmış e-postalar için **Cloudflare** (Pages + Workers Cron) hedeflenmiştir.
@@ -97,7 +99,10 @@ workers/payment-reminder/           Cloudflare Worker (cron) — ödeme özet e-
 
 ## Cloudflare
 
-**Panel (Pages):** Build komutu `npm run build`, çıktı klasörü `dist`. SPA yönlendirmesi
+**GitHub Pages:** `npm run deploy:pages` derleyip `gh-pages` dalına gönderir
+(admin şifre özeti yerel `.env`'den alınır). Yayın adresi: https://mevlutbilgee.github.io/gumruk-crm/
+
+**Panel (Cloudflare Pages):** Build komutu `npm run build`, çıktı klasörü `dist`. SPA yönlendirmesi
 `public/_redirects` ile hazır. Ortam değişkenlerini (`VITE_ADMIN_PASSWORD_HASH` dahil) Pages ayarlarından girin.
 
 **E-posta Worker'ı:**
