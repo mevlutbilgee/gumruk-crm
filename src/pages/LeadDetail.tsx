@@ -69,12 +69,12 @@ export default function LeadDetail() {
         </div>
         {/* Aşama ilerlemesi */}
         <div style={{ padding: '0 22px 20px' }}>
-          <div className="row" style={{ gap: 4 }}>
+          <div className="stage-bar">
             {activeStages.map((s, i) => (
               <button key={s.key} disabled={!canEdit || !!l.convertedCustomerId}
                 onClick={() => { actions.moveLead(l.id, s.key, s.probability); toast(`Aşama: ${s.label}`); }}
                 style={{
-                  flex: 1, height: 34, border: 0, cursor: canEdit ? 'pointer' : 'default', fontSize: 12, fontWeight: 600,
+                  cursor: canEdit ? 'pointer' : 'default',
                   borderRadius: i === 0 ? '8px 0 0 8px' : i === activeStages.length - 1 ? '0 8px 8px 0' : 0,
                   background: l.stage !== 'lost' && i <= idx ? 'var(--primary)' : 'var(--surface-3)',
                   color: l.stage !== 'lost' && i <= idx ? '#fff' : 'var(--text-2)',

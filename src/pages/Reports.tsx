@@ -128,10 +128,12 @@ export default function Reports() {
       <div className="grid grid-2">
         <div className="card">
           <div className="card__head"><h3>Aday Kaynak Performansı</h3></div>
-          <table className="table table-compact">
-            <thead><tr><th>Kaynak</th><th className="right">Aday</th><th className="right">Kazanılan</th><th className="right">Dönüşüm</th><th className="right">Huni Değeri</th></tr></thead>
-            <tbody>{bySource.map((s) => <tr key={s.label}><td className="strong">{s.label}</td><td className="right num">{s.total}</td><td className="right num">{s.won}</td><td className="right num">%{s.rate}</td><td className="right num">{fmtMoney(s.value)}</td></tr>)}</tbody>
-          </table>
+          <div className="table-wrap">
+            <table className="table table-compact">
+              <thead><tr><th>Kaynak</th><th className="right">Aday</th><th className="right">Kazanılan</th><th className="right">Dönüşüm</th><th className="right">Huni Değeri</th></tr></thead>
+              <tbody>{bySource.map((s) => <tr key={s.label}><td className="strong">{s.label}</td><td className="right num">{s.total}</td><td className="right num">{s.won}</td><td className="right num">%{s.rate}</td><td className="right num">{fmtMoney(s.value)}</td></tr>)}</tbody>
+            </table>
+          </div>
         </div>
         <div className="card">
           <div className="card__head"><h3>Temsilci Performansı</h3></div>

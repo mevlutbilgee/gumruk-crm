@@ -76,6 +76,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body, #root { height: 100%; }
+/* Yatay taşma / sağa-sola kayma koruması (sticky'yi bozmayan clip) */
+html, body { max-width: 100%; overflow-x: hidden; }
+@supports (overflow-x: clip) { html, body { overflow-x: clip; } }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+img, svg, video, canvas, iframe { max-width: 100%; }
 body {
   margin: 0; font-family: var(--font); font-size: 14px; line-height: 1.5;
   color: var(--text); background: var(--bg);
@@ -322,7 +327,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .date-range .input { min-width: 0; width: 140px; }
 
 /* ---------- Tabs ---------- */
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.tabs::-webkit-scrollbar { display: none; }
 .tab { padding: 10px 14px; border: 0; background: transparent; cursor: pointer; font-weight: 550; color: var(--text-2); border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; font-size: 13.5px; }
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
@@ -400,7 +406,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .summary-box .v { font-size: 17px; font-weight: 700; color: var(--primary-text); font-variant-numeric: tabular-nums; }
 
 /* ---------- Kanban ---------- */
-.kanban { display: grid; grid-template-columns: repeat(6, minmax(250px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 8px; }
+.kanban { display: grid; grid-template-columns: repeat(6, minmax(250px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 8px; overscroll-behavior-x: contain; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.kanban__col { scroll-snap-align: start; }
 .kanban__col { background: var(--surface-3); border-radius: var(--radius-lg); display: flex; flex-direction: column; min-height: 400px; border: 1px solid transparent; transition: .15s; }
 .kanban__col.over { border-color: var(--primary); background: var(--primary-soft); }
 .kanban__head { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -493,6 +500,129 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .profile__stat { min-width: 50%; border-bottom: 1px solid var(--border); }
   .dl { grid-template-columns: 1fr; gap: 2px 0; }
   .dl dd { margin-bottom: 8px; }
-  .filters .input, .filters .select { flex: 1; }
 }
-@media (max-width: 640px) { .hide-sm { display: none; } }
+
+
+/* ==========================================================================
+   Taşma güvenliği & mobil uyum
+   ========================================================================== */
+/* Grid/flex çocukları içerik genişliğine göre büyüyüp sayfayı taşırmasın */
+.grid > *, .form-grid > *, .form-grid-3 > *, .sub-row > *, .stack > *, .profile__main, .list-item__main { min-width: 0; }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; max-width: 100%; }
+.card { min-width: 0; max-width: 100%; }
+.content { min-width: 0; }
+.main { overflow-x: clip; }
+.company-cell__name, .list-item__title, .kcard__title { overflow-wrap: anywhere; }
+.profile__name { overflow-wrap: anywhere; }
+
+.stage-bar { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.stage-bar::-webkit-scrollbar { display: none; }
+.stage-bar > button { flex: 1 0 auto; height: 34px; border: 0; padding: 0 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.popover--wide { width: 360px; }
+
+.sidebar { height: 100vh; height: 100dvh; }
+.sidebar__nav { overscroll-behavior: contain; }
+
+@media (max-width: 1200px) {
+  .profile__stats { flex-wrap: wrap; }
+  .profile__stat { flex: 1 1 33%; border-bottom: 1px solid var(--border); }
+}
+
+@media (max-width: 900px) {
+  .sidebar { width: min(84vw, 300px); }
+  .topbar { gap: 8px; padding: 0 16px; }
+  .topbar__search { min-width: 0; }
+  .topbar__actions { gap: 2px; }
+  .content { padding: 20px 16px; }
+  .page-head { align-items: flex-start; }
+  .kanban { grid-template-columns: repeat(6, minmax(240px, 82vw)); margin: 0 -16px; padding: 0 16px 8px; scroll-padding: 0 16px; }
+  .modal-backdrop { padding: 12px; }
+}
+
+@media (max-width: 640px) {
+  /* iOS, 16px altındaki alanlara odaklanınca sayfayı otomatik yakınlaştırır → kayma. Bunu önler. */
+  .input, .select, .textarea, .topbar__search input, .filters .input, .filters .select { font-size: 16px; }
+  .input, .select { height: 42px; }
+  .btn { height: 40px; }
+  .btn-sm { height: 34px; }
+  .btn-icon { width: 40px; }
+  .btn-icon.btn-sm { width: 34px; }
+
+  .topbar { padding: 0 12px; padding-top: env(safe-area-inset-top); height: calc(var(--topbar-h) + env(safe-area-inset-top)); }
+  .topbar__search input { padding-right: 10px; }
+  .content { padding: 16px 12px calc(24px + env(safe-area-inset-bottom)); }
+
+  .page-head { margin-bottom: 16px; gap: 12px; }
+  .page-head h1 { font-size: 20px; }
+  .page-head > div:first-child { min-width: 0; width: 100%; }
+  .page-head__actions { width: 100%; }
+  .page-head__actions > .btn, .page-head__actions > a.btn { flex: 1 1 auto; }
+  .page-head__actions > .segmented { flex: 1 1 100%; }
+  .segmented { display: flex; }
+  .segmented button { flex: 1; justify-content: center; padding: 7px 8px; }
+
+  .grid { gap: 12px; }
+  .stack { gap: 12px; }
+  .stat { padding: 14px 16px; }
+  .stat__value { font-size: 22px; }
+  .card__head { padding: 14px 16px; flex-wrap: wrap; }
+  .card__body { padding: 16px; }
+  .card__foot { padding: 12px 16px; }
+  .card__foot.row-between > .row { width: 100%; flex-wrap: wrap; }
+  .card__foot.row-between > .row > .btn { flex: 1 1 auto; }
+  .form-section { padding: 16px; }
+  .list-item { padding: 12px 16px; }
+
+  .filters { padding: 12px; gap: 8px; }
+  .filters > * { flex: 1 1 100% !important; min-width: 0 !important; }
+  .filters > .select { flex: 1 1 calc(50% - 4px) !important; width: auto; }
+  .filters .input { width: 100%; }
+  .filters__search { min-width: 0; }
+  .date-range { display: flex; width: 100%; }
+  .date-range .input { flex: 1; width: auto; min-width: 0; }
+  .filters__active { padding: 10px 12px; }
+
+  .table th, .table td { padding: 10px 12px; }
+  .pagination { justify-content: center; padding: 12px; }
+  .pagination > span { width: 100%; text-align: center; }
+  .tabs { margin-bottom: 14px; }
+  .tab { padding: 10px 12px; }
+
+  .profile { padding: 16px; gap: 14px; }
+  .profile__main { min-width: 0; flex: 1 1 calc(100% - 70px); }
+  .profile > .row { width: 100%; flex-wrap: wrap; }
+  .profile > .row > .btn, .profile > .row > a.btn { flex: 1 1 auto; }
+  .profile__name { font-size: 18px; }
+  .profile__meta { gap: 6px 14px; }
+  .profile__stat { flex: 1 1 50%; padding: 12px 16px; }
+  .profile__stat .v { font-size: 15px; }
+
+  .sub-row { grid-template-columns: 1fr 1fr; padding: 12px; }
+  .sub-row > .field:first-child { grid-column: 1 / -1; }
+  .sub-row__price { grid-column: 1; text-align: left; }
+  .summary-box { width: 100%; justify-content: space-between; gap: 12px; }
+  .summary-box div { text-align: left; }
+  .sub-editor > .row-between > .btn { width: 100%; }
+
+  .modal-backdrop { padding: 0; place-items: end stretch; }
+  .modal, .modal-lg, .modal-sm { max-width: 100%; max-height: 92dvh; border-radius: 16px 16px 0 0; }
+  .modal__head, .modal__body { padding: 16px; }
+  .modal__foot { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-radius: 0; }
+  .modal__foot > .btn { flex: 1; }
+  .email-frame { height: 60dvh; }
+
+  .popover, .popover--wide { position: fixed; top: calc(var(--topbar-h) + env(safe-area-inset-top) - 4px); left: 12px; right: 12px; width: auto; min-width: 0; }
+  .toasts { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .toast { min-width: 0; max-width: none; }
+
+  .kanban { margin: 0 -12px; padding: 0 12px 8px; scroll-padding: 0 12px; }
+  .kcard { cursor: pointer; }
+  .login__form { padding: 32px 16px; place-items: start center; }
+  .hide-sm { display: none; }
+}
+
+@media (max-width: 360px) {
+  .profile__stat { flex-basis: 100%; }
+  .stat__value { font-size: 20px; }
+  .topbar .btn-icon { width: 36px; }
+}

@@ -39,6 +39,11 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const loc = useLocation();
   useEffect(() => setMobileOpen(false), [loc.pathname]);
+  useEffect(() => {
+    // Mobil menü açıkken arka plan kaymasın
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
   useEffect(() => { actions.runScheduler(); }, []);
 
   const T = today();
@@ -220,7 +225,7 @@ function NotificationBell() {
         {items.length > 0 && <span className="icon-btn__badge">{items.length}</span>}
       </button>
       {open && (
-        <div className="popover" style={{ width: 360 }}>
+        <div className="popover popover--wide">
           <div className="row-between" style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)' }}>
             <strong>Bildirimler</strong>
             <span className="subtle"><CalendarClock size={12} style={{ verticalAlign: -2 }} /> {daysAhead} gün içinde</span>

@@ -137,19 +137,21 @@ function EmailsTab() {
     <div className="card">
       {emails.length === 0 ? <EmptyState icon={<Mail size={22} />} title="Henüz e-posta yok" text="Bildirimler sekmesinden test e-postası gönderebilirsiniz." /> : (
         <>
-          <table className="table">
-            <thead><tr><th>Konu</th><th>Alıcılar</th><th>Tür</th><th>Durum</th><th>Tarih</th><th className="actions" /></tr></thead>
-            <tbody>{pg.slice.map((e) => (
-              <tr key={e.id} className="clickable" onClick={() => setView(e)}>
-                <td className="strong">{e.subject}</td>
-                <td className="muted" style={{ fontSize: 12.5 }}>{e.to.join(', ')}</td>
-                <td><Badge tone="primary">{kinds[e.kind]}</Badge></td>
-                <td><Badge tone={e.status === 'failed' ? 'danger' : e.status === 'sent' ? 'success' : 'warning'}>{e.status === 'simulated' ? 'Simüle edildi' : e.status === 'sent' ? 'Gönderildi' : 'Hata'}</Badge></td>
-                <td className="nowrap muted">{timeAgo(e.createdAt)}</td>
-                <td className="actions"><Eye size={15} className="muted" /></td>
-              </tr>
-            ))}</tbody>
-          </table>
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Konu</th><th>Alıcılar</th><th>Tür</th><th>Durum</th><th>Tarih</th><th className="actions" /></tr></thead>
+              <tbody>{pg.slice.map((e) => (
+                <tr key={e.id} className="clickable" onClick={() => setView(e)}>
+                  <td className="strong">{e.subject}</td>
+                  <td className="muted" style={{ fontSize: 12.5 }}>{e.to.join(', ')}</td>
+                  <td><Badge tone="primary">{kinds[e.kind]}</Badge></td>
+                  <td><Badge tone={e.status === 'failed' ? 'danger' : e.status === 'sent' ? 'success' : 'warning'}>{e.status === 'simulated' ? 'Simüle edildi' : e.status === 'sent' ? 'Gönderildi' : 'Hata'}</Badge></td>
+                  <td className="nowrap muted">{timeAgo(e.createdAt)}</td>
+                  <td className="actions"><Eye size={15} className="muted" /></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
           <Pagination {...pg} />
         </>
       )}
@@ -239,22 +241,24 @@ function AuditTab() {
         </select>
         <span className="subtle">{rows.length} kayıt</span>
       </div>
-      <table className="table table-compact">
-        <thead><tr><th>Kullanıcı</th><th>İşlem</th><th>Kayıt</th><th>Açıklama</th><th>Zaman</th></tr></thead>
-        <tbody>{pg.slice.map((a) => {
-          const u = users.find((x) => x.id === a.userId);
-          const [l, tone] = labels[a.action] ?? [a.action, 'neutral'];
-          return (
-            <tr key={a.id}>
-              <td><div className="row gap-sm">{u && <Avatar name={u.name} size="sm" />}<span className="nowrap">{u?.name ?? 'Sistem'}</span></div></td>
-              <td><Badge tone={tone}>{l}</Badge></td>
-              <td className="muted">{a.entity}</td>
-              <td>{a.entityLabel}</td>
-              <td className="nowrap muted" title={fmtDateTime(a.createdAt)}>{timeAgo(a.createdAt)}</td>
-            </tr>
-          );
-        })}</tbody>
-      </table>
+      <div className="table-wrap">
+        <table className="table table-compact">
+          <thead><tr><th>Kullanıcı</th><th>İşlem</th><th>Kayıt</th><th>Açıklama</th><th>Zaman</th></tr></thead>
+          <tbody>{pg.slice.map((a) => {
+            const u = users.find((x) => x.id === a.userId);
+            const [l, tone] = labels[a.action] ?? [a.action, 'neutral'];
+            return (
+              <tr key={a.id}>
+                <td><div className="row gap-sm">{u && <Avatar name={u.name} size="sm" />}<span className="nowrap">{u?.name ?? 'Sistem'}</span></div></td>
+                <td><Badge tone={tone}>{l}</Badge></td>
+                <td className="muted">{a.entity}</td>
+                <td>{a.entityLabel}</td>
+                <td className="nowrap muted" title={fmtDateTime(a.createdAt)}>{timeAgo(a.createdAt)}</td>
+              </tr>
+            );
+          })}</tbody>
+        </table>
+      </div>
       <Pagination {...pg} />
     </div>
   );
