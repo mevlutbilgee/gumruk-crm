@@ -14,16 +14,22 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Demo kullanıcıları (şifre hepsi için `demo123`):
+### Giriş
 
-| Kullanıcı | E-posta | Rol |
-|---|---|---|
-| Ayşe Yılmaz | admin@ornekgumruk.com | Yönetici (Admin) |
-| Mehmet Kaya | mehmet@ornekgumruk.com | Müdür |
-| Elif Demir | elif@ornekgumruk.com | Satış Temsilcisi |
-| Burak Şahin | burak@ornekgumruk.com | Satış Temsilcisi |
-| Zeynep Arslan | zeynep@ornekgumruk.com | Muhasebe |
-| Can Öztürk | can@ornekgumruk.com | Görüntüleyici |
+Giriş bilgileri repoda **yoktur**. Panele yalnızca yönetici (Murat Kahraman) girebilir;
+şifresinin özeti (hash) git'e girmeyen `.env` dosyasında tutulur:
+
+```bash
+cp .env.example .env
+npm run hash-password -- <admin-e-postası> <şifre>   # çıktıyı VITE_ADMIN_PASSWORD_HASH'e yazın
+```
+
+Diğer kullanıcıların başlangıçta şifresi yoktur; yönetici **Kullanıcılar** sayfasında anahtar
+simgesinden şifre belirler. Şifreler düz metin olarak saklanmaz (e-posta ile tuzlanmış SHA-256).
+
+> Not: Demo modu tarayıcıda çalıştığı için bu koruma, repoyu klonlayıp yerelde çalıştıran
+> birinin kendi kopyasını değiştirmesini engellemez; gerçek sunucu tarafı güvenlik
+> Supabase Auth + RLS ile sağlanır (aşağıya bakın).
 
 Demo verisini sıfırlamak için: **Ayarlar → Veri → Sıfırla**.
 
@@ -51,7 +57,7 @@ Demo verisini sıfırlamak için: **Ayarlar → Veri → Sıfırla**.
 - E-posta önizleme, test gönderimi, e-posta kayıtları; üst bardaki bildirim zili
 
 **Kullanıcılar & yetkiler**
-- Kullanıcı ekleme (davet e-postası), düzenleme, pasifleştirme, silme (müşterileri devredilir), şifre sıfırlama
+- Kullanıcı ekleme, düzenleme, pasifleştirme, silme (müşterileri devredilir), şifre belirleme
 - 5 rol: Admin, Müdür, Satış, Muhasebe, Görüntüleyici
 - **Düzenlenebilir yetki matrisi** (20 izin); menü, buton ve sayfalar yetkiye göre gizlenir
 - Son admin silinemez / pasifleştirilemez; kullanıcı kendini silemez
@@ -92,7 +98,7 @@ workers/payment-reminder/           Cloudflare Worker (cron) — ödeme özet e-
 ## Cloudflare
 
 **Panel (Pages):** Build komutu `npm run build`, çıktı klasörü `dist`. SPA yönlendirmesi
-`public/_redirects` ile hazır. Ortam değişkenlerini Pages ayarlarından girin.
+`public/_redirects` ile hazır. Ortam değişkenlerini (`VITE_ADMIN_PASSWORD_HASH` dahil) Pages ayarlarından girin.
 
 **E-posta Worker'ı:**
 
@@ -116,3 +122,4 @@ eşleştiğinde özet e-postayı gönderir ve `email_log` tablosuna yazar.
 | `npm run build` | Tip kontrolü + üretim derlemesi |
 | `npm run preview` | Derlenmiş çıktıyı önizle |
 | `npm run typecheck` | Yalnızca TypeScript kontrolü |
+| `npm run hash-password -- <e-posta> <şifre>` | Admin şifre özeti üretir |

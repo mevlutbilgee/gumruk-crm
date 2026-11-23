@@ -12,6 +12,7 @@ import type {
 } from './types';
 import { addMonths, buildSchedule, today, uid } from '@/lib/utils';
 import { buildDigest } from '@/lib/digest';
+import { ADMIN_PASSWORD_HASH, hashPassword } from '@/lib/auth';
 
 const KEY = 'gumruk-crm-db';
 const SESSION_KEY = 'gumruk-crm-session';
@@ -112,11 +113,15 @@ function regenerateSchedule(db: Database, c: Customer): Payment[] {
 
 // ---------------- Aksiyonlar ----------------
 export const actions = {
-  login(email: string, password: string): { ok: true } | { ok: false; error: string } {
+  async login(email: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    const fail = { ok: false as const, error: 'E-posta veya şifre hatalı.' };
     const user = state.users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-    if (!user) return { ok: false, error: 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.' };
+    if (!user || !password) return fail;
+    // Admin şifresi .env'deki özetten, diğer kullanıcılarınki admin'in panelden belirlediği özetten doğrulanır.
+    const expected = user.passwordHash ?? (user.id === 'u_admin' ? ADMIN_PASSWORD_HASH : '');
+    if (!expected) return fail;
+    if ((await hashPassword(user.email, password)) !== expected) return fail;
     if (!user.active) return { ok: false, error: 'Hesabınız pasif durumda. Yöneticinize başvurun.' };
-    if (password !== 'demo123') return { ok: false, error: 'Şifre hatalı. (Demo şifresi: demo123)' };
     sessionUserId = user.id;
     try { localStorage.setItem(SESSION_KEY, user.id); } catch { /* */ }
     set(pipe((db) => ({ ...db, users: db.users.map((u) => (u.id === user.id ? { ...u, lastLoginAt: now() } : u)) }), audit('login', 'Oturum', user.name)));
@@ -287,6 +292,7 @@ export const actions = {
       if (admins.length <= 1) return { ok: false, error: 'Sistemde en az bir aktif yönetici kalmalıdır.' };
     }
     const u: User = exists ? { ...exists, ...input, email } : { ...input, email, id: uid('u_'), createdAt: now() };
+    if (exists && exists.email !== email) delete u.passwordHash; // özet e-posta ile tuzlandığı için yeniden belirlenmeli
     set(pipe(
       (db) => ({ ...db, users: exists ? db.users.map((x) => (x.id === u.id ? u : x)) : [...db.users, u] }),
       audit(exists ? 'update' : 'create', 'Kullanıcı', u.name),
@@ -316,6 +322,15 @@ export const actions = {
       audit('delete', 'Kullanıcı', u?.name ?? id),
     ));
     return { ok: true };
+  },
+  async setPassword(userId: string, password: string) {
+    const u = state.users.find((x) => x.id === userId);
+    if (!u) return;
+    const passwordHash = await hashPassword(u.email, password);
+    set(pipe(
+      (db) => ({ ...db, users: db.users.map((x) => (x.id === userId ? { ...x, passwordHash } : x)) }),
+      audit('settings', 'Kullanıcı', `${u.name} için şifre belirlendi`),
+    ));
   },
   setRolePermissions(role: Role, perms: Permission[]) {
     if (role === 'admin') return; // admin her zaman tam yetkili

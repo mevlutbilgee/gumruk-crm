@@ -3,6 +3,7 @@ import { KeyRound, Pencil, Plus, Search, ShieldCheck, Trash2, UserPlus } from 'l
 import { actions, useDb, usePermissions } from '@/data/store';
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from '@/lib/constants';
 import { fmtDate, matches, timeAgo } from '@/lib/utils';
+import { ADMIN_PASSWORD_HASH, MIN_PASSWORD_LENGTH } from '@/lib/auth';
 import type { Role, User } from '@/data/types';
 import { Avatar, Badge, Field, Modal, PageHeader, StatCard, Switch, useConfirm, useToast } from '@/components/ui';
 
@@ -19,6 +20,17 @@ export default function UsersPage() {
   const [role, setRole] = useState('');
   const [form, setForm] = useState<Form | null>(null);
   const [error, setError] = useState('');
+  const [pwUser, setPwUser] = useState<User | null>(null);
+  const [pw, setPw] = useState({ a: '', b: '', err: '' });
+  const hasPassword = (u: User) => !!u.passwordHash || (u.id === 'u_admin' && !!ADMIN_PASSWORD_HASH);
+  const savePassword = async () => {
+    if (!pwUser) return;
+    if (pw.a.length < MIN_PASSWORD_LENGTH) { setPw({ ...pw, err: `Şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı.` }); return; }
+    if (pw.a !== pw.b) { setPw({ ...pw, err: 'Şifreler eşleşmiyor.' }); return; }
+    await actions.setPassword(pwUser.id, pw.a);
+    toast(`${pwUser.name} için şifre belirlendi.`);
+    setPwUser(null);
+  };
 
   const rows = useMemo(() => users.filter((u) => matches(q, u.name, u.email, u.title) && (!role || u.role === role)), [users, q, role]);
 
@@ -27,7 +39,7 @@ export default function UsersPage() {
     if (!form.name.trim() || !/^\S+@\S+\.\S+$/.test(form.email)) { setError('Ad ve geçerli bir e-posta zorunludur.'); return; }
     const r = actions.saveUser(form);
     if (!r.ok) { setError(r.error!); return; }
-    toast(form.id ? 'Kullanıcı güncellendi.' : 'Kullanıcı eklendi, davet e-postası gönderildi (demo).');
+    toast(form.id ? 'Kullanıcı güncellendi.' : 'Kullanıcı eklendi. Giriş yapabilmesi için anahtar simgesinden şifre belirleyin.');
     setForm(null);
   };
   const remove = async (u: User) => {
@@ -64,7 +76,7 @@ export default function UsersPage() {
                   <td><div className="company-cell"><Avatar name={u.name} /><div><div className="company-cell__name">{u.name} {u.id === me?.id && <span className="subtle">(siz)</span>}</div><div className="company-cell__sub">{u.email}{u.title ? ` · ${u.title}` : ''}</div></div></div></td>
                   <td><Badge tone={ROLE_TONE[u.role]}>{ROLE_LABELS[u.role]}</Badge></td>
                   <td className="nowrap muted">{u.phone || '—'}</td>
-                  <td className="nowrap muted">{u.lastLoginAt ? timeAgo(u.lastLoginAt) : 'Hiç'}</td>
+                  <td className="nowrap muted">{u.lastLoginAt ? timeAgo(u.lastLoginAt) : 'Hiç'}{!hasPassword(u) && <div><Badge tone="warning">Şifre yok</Badge></div>}</td>
                   <td className="nowrap muted">{fmtDate(u.createdAt)}</td>
                   <td>
                     <Switch checked={u.active} disabled={u.id === me?.id} onChange={(v) => {
@@ -74,10 +86,7 @@ export default function UsersPage() {
                   </td>
                   <td className="actions">
                     <button className="btn btn-ghost btn-icon btn-sm" onClick={() => { setError(''); setForm({ ...u }); }} aria-label="Düzenle"><Pencil size={14} /></button>
-                    <button className="btn btn-ghost btn-icon btn-sm" title="Şifre sıfırlama bağlantısı gönder" onClick={() => {
-                      actions.logEmail({ to: [u.email], kind: 'invite', subject: 'Şifre sıfırlama bağlantısı', html: `<p>Merhaba ${u.name}, şifrenizi sıfırlamak için <a href="#">buraya tıklayın</a>.</p>` });
-                      toast('Şifre sıfırlama e-postası gönderildi (demo).');
-                    }}><KeyRound size={14} /></button>
+                    <button className="btn btn-ghost btn-icon btn-sm" title="Şifre belirle" onClick={() => { setPw({ a: '', b: '', err: '' }); setPwUser(u); }}><KeyRound size={14} /></button>
                     {u.id !== me?.id && <button className="btn btn-danger-ghost btn-icon btn-sm" onClick={() => remove(u)} aria-label="Sil"><Trash2 size={14} /></button>}
                   </td>
                 </tr>
@@ -111,6 +120,19 @@ export default function UsersPage() {
             {error && <div className="callout tone-danger span-2">{error}</div>}
           </div>
         )}
+      </Modal>
+      <Modal open={!!pwUser} onClose={() => setPwUser(null)} size="sm" title="Şifre belirle" subtitle={pwUser && `${pwUser.name} · ${pwUser.email}`}
+        footer={<><button className="btn btn-secondary" onClick={() => setPwUser(null)}>Vazgeç</button><button className="btn btn-primary" onClick={savePassword}>Kaydet</button></>}>
+        <div className="stack" style={{ gap: 14 }}>
+          <Field label="Yeni şifre" hint={`En az ${MIN_PASSWORD_LENGTH} karakter`}>
+            <input className="input" type="password" autoComplete="new-password" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value, err: '' })} autoFocus />
+          </Field>
+          <Field label="Yeni şifre (tekrar)" error={pw.err}>
+            <input className="input" type="password" autoComplete="new-password" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value, err: '' })}
+              onKeyDown={(e) => e.key === 'Enter' && savePassword()} />
+          </Field>
+          <div className="subtle">Demo modunda şifre yalnızca bu tarayıcıda, özet (hash) olarak saklanır.</div>
+        </div>
       </Modal>
     </>
   );

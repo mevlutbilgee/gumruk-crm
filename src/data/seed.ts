@@ -7,7 +7,7 @@ import type {
   ServicePackage, Subscription, Task, User,
 } from './types';
 
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 function mulberry32(a: number) {
   return () => {
@@ -29,7 +29,7 @@ export function createSeed(): Database {
 
   // ----- Kullanıcılar -----
   const users: User[] = [
-    { id: 'u_admin', name: 'Ayşe Yılmaz', email: 'admin@ornekgumruk.com', role: 'admin', title: 'Genel Müdür', phone: '0532 111 22 33', active: true, createdAt: iso(addDays(T, -720)) },
+    { id: 'u_admin', name: 'Murat Kahraman', email: 'murat@ornekgumruk.com', role: 'admin', title: 'Genel Müdür', phone: '0532 111 22 33', active: true, createdAt: iso(addDays(T, -720)) },
     { id: 'u_manager', name: 'Mehmet Kaya', email: 'mehmet@ornekgumruk.com', role: 'manager', title: 'Operasyon Müdürü', phone: '0533 222 33 44', active: true, createdAt: iso(addDays(T, -650)) },
     { id: 'u_sales1', name: 'Elif Demir', email: 'elif@ornekgumruk.com', role: 'sales', title: 'Kıdemli Satış Uzmanı', phone: '0535 333 44 55', active: true, createdAt: iso(addDays(T, -500)) },
     { id: 'u_sales2', name: 'Burak Şahin', email: 'burak@ornekgumruk.com', role: 'sales', title: 'Satış Temsilcisi', phone: '0536 444 55 66', active: true, createdAt: iso(addDays(T, -300)) },
@@ -224,7 +224,7 @@ export function createSeed(): Database {
     rolePermissions: structuredClone(DEFAULT_ROLE_PERMISSIONS),
     notification: {
       enabled: true, frequency: 'daily', sendHour: 9, monthlyDay: 1, daysAhead: 7, includeOverdue: true,
-      recipients: ['admin@ornekgumruk.com', 'zeynep@ornekgumruk.com'],
+      recipients: ['murat@ornekgumruk.com', 'zeynep@ornekgumruk.com'],
     },
     company: {
       name: 'Örnek Gümrük Müşavirliği Ltd. Şti.', email: 'info@ornekgumruk.com', phone: '0212 555 00 00',

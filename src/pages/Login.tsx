@@ -1,24 +1,25 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { BellRing, FileCheck2, LogIn, Ship, Target, Users } from 'lucide-react';
-import { actions, useDb, usePermissions } from '@/data/store';
-import { ROLE_LABELS } from '@/lib/constants';
-import { Avatar, Field } from '@/components/ui';
+import { actions, usePermissions } from '@/data/store';
+import { Field } from '@/components/ui';
 
 export default function Login() {
   const { user } = usePermissions();
-  const users = useDb((d) => d.users.filter((u) => u.active));
-  const [email, setEmail] = useState('admin@ornekgumruk.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const from = (useLocation().state as { from?: string } | null)?.from ?? '/';
 
   if (user) return <Navigate to={from} replace />;
 
-  const submit = (e?: React.FormEvent, em = email, pw = password) => {
-    e?.preventDefault();
-    const r = actions.login(em, pw);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const r = await actions.login(email, password);
+    setBusy(false);
     if (!r.ok) setError(r.error);
     else navigate(from, { replace: true });
   };
@@ -49,28 +50,14 @@ export default function Login() {
           <p className="muted" style={{ marginTop: 6 }}>Panele erişmek için giriş yapın.</p>
           <form onSubmit={submit} className="stack" style={{ marginTop: 24, gap: 14 }}>
             <Field label="E-posta">
-              <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
+              <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" autoFocus required />
             </Field>
             <Field label="Şifre" error={error}>
-              <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+              <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
             </Field>
-            <button className="btn btn-primary" style={{ height: 40 }} type="submit"><LogIn size={16} /> Giriş yap</button>
+            <button className="btn btn-primary" style={{ height: 40 }} type="submit" disabled={busy}><LogIn size={16} /> {busy ? 'Kontrol ediliyor…' : 'Giriş yap'}</button>
           </form>
 
-          <div className="divider" />
-          <div className="subtle">Demo kullanıcıları (şifre: <b>demo123</b>) — farklı yetkileri denemek için tıklayın:</div>
-          <div className="demo-users">
-            {users.slice(0, 6).map((u) => (
-              <button key={u.id} className="demo-user" onClick={() => submit(undefined, u.email, 'demo123')}>
-                <Avatar name={u.name} size="sm" />
-                <span style={{ flex: 1 }}>
-                  <div className="strong" style={{ fontSize: 13 }}>{u.name}</div>
-                  <div className="subtle">{u.email}</div>
-                </span>
-                <span className="badge tone-primary">{ROLE_LABELS[u.role]}</span>
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </div>

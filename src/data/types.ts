@@ -40,6 +40,8 @@ export interface User {
   title?: string;
   createdAt: string;
   lastLoginAt?: string;
+  /** Yalnızca demo modunda: e-posta ile tuzlanmış SHA-256 şifre özeti */
+  passwordHash?: string;
 }
 
 export type BillingCycle = 'monthly' | 'yearly';
