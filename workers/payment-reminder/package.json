@@ -1,0 +1,13 @@
+{
+  "name": "gumruk-crm-payment-reminder",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241112.0",
+    "wrangler": "^3.90.0"
+  }
+}

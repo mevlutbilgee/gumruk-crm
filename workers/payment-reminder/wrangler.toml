@@ -1,0 +1,18 @@
+name = "gumruk-crm-payment-reminder"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# Her saat başı çalışır; gönderim saati / sıklığı Supabase'teki
+# notification_settings tablosundan okunur (panelden yönetilir).
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+TIMEZONE = "Europe/Istanbul"
+MAIL_FROM = "GümrükCRM <bildirim@ornekgumruk.com>"
+
+# Gizli değerler (wrangler secret put ...):
+#   SUPABASE_URL
+#   SUPABASE_SERVICE_ROLE_KEY
+#   RESEND_API_KEY
+#   RUN_TOKEN            (isteğe bağlı, POST /run ile manuel tetikleme)
